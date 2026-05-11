@@ -113,10 +113,10 @@ water-monitor/
 │   │
 │   ├── .env.example
 │   ├── alembic.ini
-│   ├── README.md
 │   └── requirements.txt
 │
 ├── .gitignore
+├── README.md
 └── venv/                           # Virtual environment (tidak dipush)
 ```
 
