@@ -73,28 +73,51 @@ Buka browser: http://localhost:8000/docs
 ## Struktur Folder
 
 ```
-water-monitor-backend/
-├── app/
-│   ├── core/
-│   │   ├── config.py       # Settings dari .env
-│   │   └── database.py     # Koneksi PostgreSQL async
-│   ├── models/
-│   │   ├── location.py     # Tabel locations
-│   │   ├── reading.py      # Tabel readings
-│   │   └── alert.py        # Tabel alerts
-│   ├── schemas/            # Pydantic schemas (request/response)
-│   ├── routes/             # API endpoints
-│   ├── services/           # Business logic
-│   │   ├── detection.py    # YOLOv8 + OpenCV
-│   │   ├── alert.py        # Alert threshold logic
-│   │   └── telegram_bot.py # Kirim notifikasi
-│   ├── utils/              # Helper functions
-│   └── main.py             # Entry point FastAPI
-├── alembic/                # Migrasi database
-├── yolo_model/             # File weights (.pt)
-├── .env.example
-├── alembic.ini
-└── requirements.txt
+water-monitor/
+├── backend/
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── config.py           # Konfigurasi settings dari .env
+│   │   │   └── database.py         # Koneksi PostgreSQL
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── alert.py            # Model tabel alerts
+│   │   │   ├── location.py         # Model tabel locations
+│   │   │   └── reading.py          # Model tabel readings
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── alert.py            # Schema request/response alert
+│   │   │   ├── location.py         # Schema request/response location
+│   │   │   └── reading.py          # Schema request/response reading
+│   │   ├── routes/
+│   │   │   ├── __init__.py
+│   │   │   ├── alerts.py           # Endpoint alerts
+│   │   │   ├── camera.py           # Endpoint kontrol kamera worker
+│   │   │   ├── locations.py        # Endpoint lokasi sensor
+│   │   │   └── readings.py         # Endpoint data pembacaan air
+│   │   ├── services/
+│   │   │   ├── camera_worker.py    # Background worker kamera realtime
+│   │   │   ├── detection.py        # YOLOv8 + OpenCV water detection
+│   │   │   └── reading_service.py  # Business logic pembacaan air
+│   │   ├── utils/                  # Helper / utility functions
+│   │   └── main.py                 # Entry point FastAPI
+│   │
+│   ├── alembic/
+│   │   ├── versions/
+│   │   │   └── 02ec2916ff76_create_initial_tables.py
+│   │   ├── env.py
+│   │   └── script.py.mako
+│   │
+│   ├── yolo_model/
+│   │   └── best.pt                 # Model YOLO hasil training
+│   │
+│   ├── .env.example
+│   ├── alembic.ini
+│   ├── README.md
+│   └── requirements.txt
+│
+├── .gitignore
+└── venv/                           # Virtual environment (tidak dipush)
 ```
 
 ---
