@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Debug Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #a6e3a1;
+        }
+        .video-container {
+            border: 5px solid #89b4fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            background-color: #000;
+        }
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .note {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #bac2de;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Live YOLO Detection Stream</h1>
+    
+    <div class="video-container">
+        <!-- RAHASIANYA ADA DI SINI: Tag img akan me-render stream dari FastAPI -->
+        <!-- Ubah angka 0 menjadi URL IP Camera jika kamu mau test IP Cam -->
+        <img src="http://127.0.0.1:8000/api/v1/camera/stream?camera_source=0" alt="Loading Stream..." />
+    </div>
+
+    <p class="note">Arahkan kamera ke Staff Gauge untuk melihat Bounding Box.</p>
+
+</body>
+</html>
