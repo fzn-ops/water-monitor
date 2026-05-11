@@ -1,4 +1,4 @@
-# Water Monitor Backend
+# Water Monitor
 
 Backend API untuk sistem monitoring level air berbasis YOLOv8 + FastAPI.
 
