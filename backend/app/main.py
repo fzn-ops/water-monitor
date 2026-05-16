@@ -26,10 +26,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+origins = [
+    "http://localhost:5173",  # Port default Vite React
+    "http://127.0.0.1:5173",
+]
+
 # CORS - izinkan frontend akses API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],    # ganti dengan domain frontend saat production
+    allow_origins=origins,    # ganti dengan domain frontend saat production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

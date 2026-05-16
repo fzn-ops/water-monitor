@@ -51,20 +51,8 @@ class WaterLevelDetector:
         logger.info("Model berhasil dimuat.")
 
     def detect_frame(self, frame: np.ndarray) -> dict:
-        """
-        Proses satu frame gambar.
-
-        Returns dict:
-        {
-            "water_level_cm": float,   # estimasi tinggi air dalam cm
-            "pixel_distance": float,   # jarak pixel permukaan air
-            "meter_box": list | None,  # bounding box meteran [x1,y1,x2,y2]
-            "water_box": list | None,  # bounding box permukaan air
-            "annotated_frame": ndarray # frame dengan anotasi kotak deteksi
-        }
-        """
+        # Inference YOLO, tidak perlu plot otomatis lagi
         results = self.model(frame, verbose=False)[0]
-        annotated = results.plot()  # frame dengan kotak deteksi
 
         meter_box = None
         water_box = None
@@ -78,20 +66,44 @@ class WaterLevelDetector:
             coords = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
             conf = float(box.conf[0])
 
-            # >>> BARIS DEBUGGING (Akan muncul di terminal) <<<
-            print(f">>> YOLO MELIHAT OBJEK: {cls_name} (conf: {conf:.2f})")
-
-            # >>> PENYESUAIAN LABEL NAMA CLASS <<<
+            # 1. Langsung abaikan yang di bawah threshold (terminal jadi bersih)
             if conf < MIN_CONF:
-                print(f">>> DIABAIKAN: {cls_name} confidence terlalu rendah ({conf:.2f} < {MIN_CONF})")
                 continue
-            if cls_name == "staff_gauge" and conf > best_meter_conf:
+
+            # 2. Cari kotak dengan confidence tertinggi untuk masing-masing class
+            if (cls_name == "meter" or cls_name == "staff_gauge") and conf > best_meter_conf:
                 meter_box = coords
                 best_meter_conf = conf
-            elif cls_name == "water_level" and conf > best_water_conf:
+            elif (cls_name == "water_surface" or cls_name == "water_level") and conf > best_water_conf:
                 water_box = coords
                 best_water_conf = conf
 
+        # --- LOG TERMINAL: Hanya print pemenang tertingginya saja ---
+        if meter_box:
+            print(f">>> TERPILIH: staff_gauge (conf: {best_meter_conf:.2f})")
+        if water_box:
+            print(f">>> TERPILIH: water_level (conf: {best_water_conf:.2f})")
+
+        # --- GAMBAR KOTAK MANUAl (Hanya 1 Kotak Terbaik) ---
+        annotated = frame.copy() # Salin gambar asli agar tidak rusak
+
+        if meter_box:
+            # OpenCV butuh angka bulat (integer) untuk menggambar koordinat
+            x1, y1, x2, y2 = map(int, meter_box)
+            # Gambar kotak warna Hijau (0, 255, 0) ketebalan 2
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            # Tulis label di atas kotaknya
+            cv2.putText(annotated, f"Staff Gauge {best_meter_conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+        if water_box:
+            x1, y1, x2, y2 = map(int, water_box)
+            # Gambar kotak warna Biru (255, 0, 0) ketebalan 2
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            cv2.putText(annotated, f"Water Level {best_water_conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+        # Hitung jarak air pakai fungsi yang sudah kamu perbaiki sebelumnya
         pixel_distance, water_level_cm = self._calculate_water_level(meter_box, water_box)
 
         return {
@@ -106,7 +118,6 @@ class WaterLevelDetector:
         self,
         meter_box: list | None,
         water_box: list | None,
-        meter_height_cm: float = 240.0,  # ← sesuaikan tinggi fisik meteran kamu
     ) -> tuple[float, float]:
         """
         Hitung tinggi air dalam cm menggunakan meteran sebagai referensi skala.
@@ -116,31 +127,28 @@ class WaterLevelDetector:
             pixel_distance = meter_bottom - water_top
             water_level_cm = pixel_distance / pixel_per_cm
         """
-        if meter_box is None or water_box is None:
+        if water_box is None:
             return 0.0, 0.0
 
-        # Tinggi meteran dalam pixel
-        meter_top    = meter_box[1]   # y1 meteran (atas)
-        meter_bottom = meter_box[3]   # y2 meteran (bawah)
-        meter_height_px = meter_bottom - meter_top
+        DASAR_METERAN_Y = 400.0
 
-        if meter_height_px <= 0:
-            return 0.0, 0.0
-
-        # Skala: berapa pixel per 1 cm
-        pixel_per_cm = meter_height_px / meter_height_cm
-
-        # Jarak pixel dari permukaan air ke dasar meteran
+        # === 2. AMBIL TITIK PERMUKAAN AIR ===
         water_y = (water_box[1] + water_box[3]) / 2
-        pixel_distance = max(0.0, round(meter_bottom - water_y, 2))
 
-        # Konversi ke cm
-        water_level_cm = round(pixel_distance / pixel_per_cm, 2)
+        # === 3. HITUNG JARAK ===
+        # Jarak dari dasar sungai (0 cm) naik ke permukaan air
+        pixel_distance = DASAR_METERAN_Y - water_y
+        
+        # Jika air berada di bawah dasar meteran, anggap 0
+        if pixel_distance < 0:
+            pixel_distance = 0.0
 
-        print(f">>> Meteran: {meter_height_px:.1f}px = {meter_height_cm}cm")
-        print(f">>> Skala: {pixel_per_cm:.2f} px/cm")
-        print(f">>> Jarak pixel air: {pixel_distance:.1f}px")
-        print(f">>> Tinggi air: {water_level_cm:.2f} cm")
+        # === 4. KONVERSI KE CM (Gunakan self.pixel_to_cm dari __init__) ===
+        water_level_cm = round(pixel_distance * self.pixel_to_cm, 2)
+
+        print(f">>> Posisi Air Y  : {water_y:.1f}px")
+        print(f">>> Jarak Naiknya : {pixel_distance:.1f}px")
+        print(f">>> Tinggi Air    : {water_level_cm:.2f} cm")
 
         return pixel_distance, water_level_cm
 
