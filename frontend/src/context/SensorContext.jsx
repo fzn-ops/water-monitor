@@ -6,6 +6,7 @@ export const useSensor = () => useContext(SensorContext);
 export const SensorProvider = ({ children }) => {
   // Inisialisasi state kosong/default
   const [waterLevel, setWaterLevel] = useState(0);
+  const [dangerThreshold, setDangerThreshold] = useState(100);
   const [logs, setLogs] = useState([]);
   const [history, setHistory] = useState([]);
 
@@ -15,7 +16,7 @@ export const SensorProvider = ({ children }) => {
     id: 1,
     name: "Sungai Ciliwung",
     city: "Kota Ngawi Selatan",
-    cameraUrl: "http://192.168.137.18:8080/video" // Sesuaikan IP-nya
+    cameraUrl: "http://192.168.137.18:8080/video"
   });
 
   // Ambil alamat API dari file .env (atau gunakan localhost sebagai fallback)
@@ -41,12 +42,13 @@ export const SensorProvider = ({ children }) => {
         // Update Level Air Saat Ini 
         const currentLevel = data[0].water_level_cm;
         setWaterLevel(currentLevel);
-
+        setDangerThreshold(data[0].danger_threshold);
         // Update Logs 
         const newLogs = data.slice(0, 3).map((item) => {
-          const dateObj = new Date(item.recorded_at); 
+          const dateObj = new Date(item.recorded_at);
+          const statusKapital = item.status.charAt(0).toUpperCase() + item.status.slice(1); 
           return {
-            status: getStatus(item.water_level_cm),
+            status: statusKapital,
             level: item.water_level_cm,
             time: dateObj.toLocaleTimeString("id-ID")
           };
@@ -96,9 +98,10 @@ export const SensorProvider = ({ children }) => {
       waterLevel, 
       logs, 
       history, 
-      getStatus,
+      currentStatus: logs.length > 0 ? logs[0].status : "Aman",
       activeLocation,       // Diekspor agar RiverPanel bisa baca namanya
-      setActiveLocation     // Diekspor agar Topbar bisa mengubah lokasinya
+      setActiveLocation,
+      dangerThreshold       // Diekspor agar komponen lain bisa akses threshold bahaya
     }}>
       {children}
     </SensorContext.Provider>

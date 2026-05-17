@@ -14,7 +14,7 @@ class WorkerConfig(BaseModel):
     location_id: int
     camera_source: int | str = 0       # 0 = webcam, atau URL IP cam
     interval_seconds: int = 5          # jeda antar pembacaan
-    pixel_to_cm: float = 0.5           # faktor konversi pixel → cm
+    tinggi_fisik_meter_cm: float = 200.0           # faktor konversi pixel → cm
 
 
 @router.post("/start", status_code=status.HTTP_200_OK)
@@ -35,7 +35,7 @@ async def start_worker(config: WorkerConfig):
             location_id=config.location_id,
             camera_source=config.camera_source,
             interval_seconds=config.interval_seconds,
-            pixel_to_cm=config.pixel_to_cm,
+            tinggi_fisik_meter_cm=config.tinggi_fisik_meter_cm,
         )
     )
 
@@ -44,7 +44,7 @@ async def start_worker(config: WorkerConfig):
         "location_id": config.location_id,
         "camera_source": config.camera_source,
         "interval_seconds": config.interval_seconds,
-        "pixel_to_cm": config.pixel_to_cm,
+        "tinggi_fisik_meter_cm": config.tinggi_fisik_meter_cm,
     }
 
 
@@ -77,7 +77,7 @@ async def generate_frames(camera_source: int | str = 0):
     import asyncio
     
     # Load model tanpa kalkulasi konversi ke cm karena kita cuma butuh visual
-    detector = WaterLevelDetector()
+    detector = WaterLevelDetector(tinggi_fisik_meter_cm=200.0)
     
     with CameraStream(source=camera_source) as cam:
         while True:

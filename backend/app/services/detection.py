@@ -25,7 +25,7 @@ class WaterLevelDetector:
       4. Konversi pixel → cm menggunakan skala kalibrasi
     """
 
-    def __init__(self, model_path: str = str(MODEL_PATH), pixel_to_cm: float = 0.5):
+    def __init__(self, model_path: str = str(MODEL_PATH), tinggi_fisik_meter_cm: float = 200.0):
         """
         Args:
             model_path   : Path ke file .pt hasil training
@@ -33,7 +33,8 @@ class WaterLevelDetector:
                            Contoh: 0.5 berarti 1 pixel = 0.5 cm
                            Sesuaikan dengan jarak kamera ke meteran
         """
-        self.pixel_to_cm = pixel_to_cm
+        self.tinggi_fisik_meter_cm = tinggi_fisik_meter_cm
+        
         self.model = None
         self._load_model(model_path)
 
@@ -86,9 +87,9 @@ class WaterLevelDetector:
 
         # --- LOG TERMINAL: Hanya print pemenang tertingginya saja ---
         if meter_box:
-            print(f">>> TERPILIH: staff_gauge (conf: {best_meter_conf:.2f})")
+            logger.debug(f">>> TERPILIH: staff_gauge (conf: {best_meter_conf:.2f})")
         if water_box:
-            print(f">>> TERPILIH: water_level (conf: {best_water_conf:.2f})")
+            logger.debug(f">>> TERPILIH: water_level (conf: {best_water_conf:.2f})")
 
         # --- GAMBAR KOTAK MANUAl (Hanya 1 Kotak Terbaik) ---
         annotated = frame.copy() # Salin gambar asli agar tidak rusak
@@ -142,39 +143,65 @@ class WaterLevelDetector:
         water_box: list | None,
     ) -> tuple[float, float]:
         """
-        Hitung tinggi air dalam cm menggunakan meteran sebagai referensi skala.
-
-        Rumus:
-            pixel_per_cm   = tinggi_pixel_meteran / tinggi_fisik_meteran_cm
-            pixel_distance = meter_bottom - water_top
-            water_level_cm = pixel_distance / pixel_per_cm
+        Hitung tinggi air menggunakan METODE JANGKAR ATAS + SKALA LEBAR DINAMIS.
+        Tahan terhadap kamera goyang dan efek Zoom!
         """
-        if water_box is None:
+        if meter_box is None or water_box is None:
             return 0.0, 0.0
 
-        dasar_meteran_y = meter_box[3]
-
-        # === 2. AMBIL TITIK PERMUKAAN AIR ===
-        water_y = (water_box[1] + water_box[3]) / 2
-
-        # === 3. HITUNG JARAK ===
-        # Jarak dari dasar sungai (0 cm) naik ke permukaan air
-        pixel_distance = dasar_meteran_y - water_y
+        # =======================================================
+        # 1. HITUNG SKALA DINAMIS MENGGUNAKAN LEBAR METERAN
+        # =======================================================
+        # GANTI ANGKA INI dengan ukuran lebar fisik papan penggarismu di dunia nyata
+        # (Misalnya: papan meteran lebarnya 15 cm)
+        LEBAR_FISIK_METER_CM = 15.0 
         
-        # Jika air berada di bawah dasar meteran, anggap 0
-        if pixel_distance < 0:
-            pixel_distance = 0.0
+        # Lebar pixel = titik x kanan dikurangi titik x kiri (x2 - x1)
+        lebar_pixel_meter = meter_box[2] - meter_box[0]
 
-        # === 4. KONVERSI KE CM (Gunakan self.pixel_to_cm dari __init__) ===
-        water_level_cm = round(pixel_distance * self.pixel_to_cm, 2)
+        # Cegah error "dibagi 0" jika AI sesaat nge-bug / kotak terlalu kecil
+        if lebar_pixel_meter <= 0:
+            return 0.0, 0.0
 
-        print(f">>> Dasar Meteran Y : {dasar_meteran_y:.1f}px")
-        print(f">>> Posisi Air Y    : {water_y:.1f}px")
-        print(f">>> Jarak Naiknya   : {pixel_distance:.1f}px")
-        print(f">>> Tinggi Air      : {water_level_cm:.2f} cm")
-        return pixel_distance, water_level_cm
+        # Rasio pixel/cm sekarang murni dinamis menyesuaikan Zoom kamera!
+        PIXEL_PER_CM = lebar_pixel_meter / LEBAR_FISIK_METER_CM
 
 
+        # =======================================================
+        # 2. METODE JANGKAR ATAS (MENGUKUR JARAK TURUN)
+        # =======================================================
+        # y1 meteran (Ujung paling atas papan meteran)
+        meter_top_y = meter_box[1] 
+        
+        # y1 air (Garis atas permukaan air)
+        water_y = water_box[1]     
+
+        # Jarak dari ujung atas meteran turun ke permukaan air
+        pixel_distance_from_top = water_y - meter_top_y
+        
+        if pixel_distance_from_top < 0:
+            pixel_distance_from_top = 0.0
+
+
+        # =======================================================
+        # 3. KONVERSI & KALKULASI TINGGI AIR AKHIR
+        # =======================================================
+        cm_dari_atas = pixel_distance_from_top / PIXEL_PER_CM
+        
+        # Tinggi air = Tinggi papan total - Jarak dari atas
+        water_level_cm = round(self.tinggi_fisik_meter_cm - cm_dari_atas, 2)
+
+        # Pastikan tidak ada angka minus jika air surut jauh di luar kamera
+        if water_level_cm < 0:
+            water_level_cm = 0.0
+
+        # --- LOG TERMINAL (Tersembunyi, hanya muncul kalau mode debug aktif) ---
+        logger.debug(f">>> [DINAMIS] Lebar Pixel Meteran  : {lebar_pixel_meter:.1f} px")
+        logger.debug(f">>> [DINAMIS] Skala Saat Ini       : {PIXEL_PER_CM:.2f} px/cm")
+        logger.debug(f">>> [DINAMIS] Jarak Turun          : {cm_dari_atas:.2f} cm")
+        logger.debug(f">>> TINGGI AIR SEBENARNYA          : {water_level_cm:.2f} cm")
+        return pixel_distance_from_top, water_level_cm
+    
 class CameraStream:
     """
     Kelola stream kamera menggunakan OpenCV.

@@ -9,9 +9,9 @@ import lastupdateIcon from "../assets/clock.png";
 import warningIcon from "../assets/waspada.png";
 
 export default function StatusCards() {
-  const { waterLevel, getStatus } = useSensor();
+  const { waterLevel, currentStatus, dangerThreshold } = useSensor();
   const { darkMode } = useTheme();
-  const status = getStatus(waterLevel);
+  const status = currentStatus;
 
   // Tentukan ikon berdasarkan status
   let statusIcon = safeIcon;
@@ -151,7 +151,7 @@ export default function StatusCards() {
           }}
         >
           <span style={{ color: "#ff6b6b" }}>
-            ({Math.max(0, 100 - waterLevel)}cm)
+            ({Math.max(0, dangerThreshold - waterLevel)}cm)
           </span>{" "}
           lagi dari ambang bahaya
         </p>
@@ -171,7 +171,7 @@ export default function StatusCards() {
             fontSize: "18px",
           }}
         >
-          Perubahan Terakhir
+          Waktu Saat Ini
         </p>
           
         {/* Icon + Waktu */}

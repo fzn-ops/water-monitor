@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
+from app.core.config import settings
 
 
 # --- Request schemas ---
@@ -21,3 +22,10 @@ class ReadingResponse(BaseModel):
     status: str
     pixel_distance: float | None
     recorded_at: datetime
+
+    @computed_field
+    @property
+    def danger_threshold(self) -> float:
+        # Mengirimkan angka batas bahaya ke React
+        return float(settings.THRESHOLD_BAHAYA)
+

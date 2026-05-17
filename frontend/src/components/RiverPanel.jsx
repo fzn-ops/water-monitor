@@ -34,7 +34,6 @@ export default function RiverPanel(){
             body: JSON.stringify({
                 location_id: activeLocation.id, // Gunakan ID dinamis
                 camera_source: activeLocation.cameraUrl, // Gunakan URL dinamis
-                interval_seconds: 5
             })
         });
         

@@ -9,7 +9,7 @@ import ultralytics.nn.tasks
 API_BASE = "http://127.0.0.1:8000/api/v1"
 
 async def run_camera_worker(location_id: int, camera_source: int | str = 0,
-                            interval_seconds: int = 5, pixel_to_cm: float = 0.5):
+                            interval_seconds: int = 5, tinggi_fisik_meter_cm: float = 200.0):
     """
     Background worker: baca frame kamera setiap `interval_seconds` detik,
     deteksi level air menggunakan YOLO, lalu kirim ke API /readings.
@@ -29,7 +29,7 @@ async def run_camera_worker(location_id: int, camera_source: int | str = 0,
 
         # 3. Load Model YOLO
         print("-> Mencoba load model YOLO (best.pt)...")
-        detector = WaterLevelDetector(pixel_to_cm=pixel_to_cm)
+        detector = WaterLevelDetector(tinggi_fisik_meter_cm=tinggi_fisik_meter_cm)
         print("-> [SUCCESS] Model YOLO berhasil dimuat!")
 
         # 4. Hubungkan ke Kamera (Webcam / IP Cam)
@@ -64,15 +64,24 @@ async def run_camera_worker(location_id: int, camera_source: int | str = 0,
                         }
 
                         # Kirim request ke Database via API FastAPI
-                        response = await client.post(f"{API_BASE}/readings/", json=payload)
-                        response.raise_for_status()
-
-                        # Berhasil disimpan!
-                        print(
-                            f"[{datetime.now().strftime('%H:%M:%S')}] "
-                            f"[BERHASIL DISIMPAN] Level Air: {result['water_level_cm']} cm | "
-                            f"Jarak: {result['pixel_distance']} px"
-                        )
+                        try:
+                            response = await client.post(f"{API_BASE}/readings/", json=payload)
+                            
+                            # Cek apakah sukses (200 atau 201)
+                            if response.status_code in [200, 201]:
+                                print(
+                                    f"[{datetime.now().strftime('%H:%M:%S')}] "
+                                    f"✅ [BERHASIL DISIMPAN] Level Air: {result['water_level_cm']} cm | "
+                                    f"Jarak: {result['pixel_distance']} px"
+                                )
+                            else:
+                                # Jika ditolak, print alasan penolakannya!
+                                print(f"❌ API MENOLAK DATA (Status {response.status_code})")
+                                print(f"❌ Detail Error dari FastAPI: {response.text}")
+                                print(f"📦 Payload yang dikirim: {payload}")
+                                
+                        except Exception as e:
+                            print(f"💥 ERROR KONEKSI/SISTEM: {e}")
 
                     except httpx.HTTPError as e:
                         print(f"[{datetime.now().strftime('%H:%M:%S')}] [ERROR API] Gagal mengirim data ke Database: {e}")

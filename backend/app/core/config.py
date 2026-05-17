@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Threshold (cm)
     THRESHOLD_WASPADA: int = 50
-    THRESHOLD_BAHAYA: int = -1
+    THRESHOLD_BAHAYA: int = 150
 
     class Config:
         env_file = ".env"
