@@ -99,7 +99,7 @@ export default function RiverPanel(){
             transition: "0.2s"
           }}
         >
-          {isLive ? "⏹ Matikan Kamera & Worker" : "▶ Cek Live AI & Worker"}
+          {isLive ? "⏹ Matikan Kamera" : "▶ Nyalakan Kamera"}
         </button>
       </div>
 

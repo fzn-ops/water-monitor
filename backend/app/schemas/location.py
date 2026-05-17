@@ -9,6 +9,7 @@ class LocationCreate(BaseModel):
     latitude: float
     longitude: float
     image_url: str | None = None
+    camera_url: str | None = None
 
 
 class LocationUpdate(BaseModel):
@@ -16,6 +17,7 @@ class LocationUpdate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     image_url: str | None = None
+    camera_url: str | None = None  
 
 
 # --- Response schemas ---
@@ -28,4 +30,5 @@ class LocationResponse(BaseModel):
     latitude: float
     longitude: float
     image_url: str | None
+    camera_url: str | None         
     created_at: datetime

@@ -4,6 +4,8 @@ from ultralytics import YOLO
 from pathlib import Path
 import logging
 import torch
+import time
+from app.services.telegram_bot import send_telegram_alert
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,9 @@ class WaterLevelDetector:
         self.pixel_to_cm = pixel_to_cm
         self.model = None
         self._load_model(model_path)
+
+        self.last_alert_time = 0
+        self.batas_bahaya_cm = 100.0
 
     def _load_model(self, model_path: str):
         """Load model YOLOv8 dari file .pt"""
@@ -105,6 +110,25 @@ class WaterLevelDetector:
 
         # Hitung jarak air pakai fungsi yang sudah kamu perbaiki sebelumnya
         pixel_distance, water_level_cm = self._calculate_water_level(meter_box, water_box)
+        
+        if water_level_cm > self.batas_bahaya_cm:
+            waktu_sekarang = time.time()    
+            # Cek apakah sudah lewat 5 menit (300 detik) sejak alarm terakhir
+            if waktu_sekarang - self.last_alert_time > 300:
+                pesan_bahaya = (
+                    f"🚨 *PERINGATAN BAHAYA BANJIR!* 🚨\n\n"
+                    f"🌊 Tinggi Air Terdeteksi: {water_level_cm:.2f} cm\n"
+                    f"⚠️ Status: Melewati batas aman ({self.batas_bahaya_cm} cm)\n\n"
+                    f"Mohon segera lakukan pengecekan lokasi!"
+                )
+                
+                print(">>> [ALARM] Ketinggian air berbahaya! Mengirim ke Telegram...")
+                
+                # Kirim pesan + gambar hasil deteksi AI (annotated)
+                send_telegram_alert(pesan_bahaya, frame_gambar=annotated)
+                
+                # Perbarui waktu memori agar tidak spam
+                self.last_alert_time = waktu_sekarang
 
         return {
             "water_level_cm": water_level_cm,
@@ -130,14 +154,14 @@ class WaterLevelDetector:
         if water_box is None:
             return 0.0, 0.0
 
-        DASAR_METERAN_Y = 400.0
+        dasar_meteran_y = meter_box[3]
 
         # === 2. AMBIL TITIK PERMUKAAN AIR ===
         water_y = (water_box[1] + water_box[3]) / 2
 
         # === 3. HITUNG JARAK ===
         # Jarak dari dasar sungai (0 cm) naik ke permukaan air
-        pixel_distance = DASAR_METERAN_Y - water_y
+        pixel_distance = dasar_meteran_y - water_y
         
         # Jika air berada di bawah dasar meteran, anggap 0
         if pixel_distance < 0:
@@ -146,10 +170,10 @@ class WaterLevelDetector:
         # === 4. KONVERSI KE CM (Gunakan self.pixel_to_cm dari __init__) ===
         water_level_cm = round(pixel_distance * self.pixel_to_cm, 2)
 
-        print(f">>> Posisi Air Y  : {water_y:.1f}px")
-        print(f">>> Jarak Naiknya : {pixel_distance:.1f}px")
-        print(f">>> Tinggi Air    : {water_level_cm:.2f} cm")
-
+        print(f">>> Dasar Meteran Y : {dasar_meteran_y:.1f}px")
+        print(f">>> Posisi Air Y    : {water_y:.1f}px")
+        print(f">>> Jarak Naiknya   : {pixel_distance:.1f}px")
+        print(f">>> Tinggi Air      : {water_level_cm:.2f} cm")
         return pixel_distance, water_level_cm
 
 

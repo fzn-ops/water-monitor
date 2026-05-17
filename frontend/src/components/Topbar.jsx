@@ -34,17 +34,15 @@ export default function Topbar({ onSelectLocation }) {
   }, []); // Array kosong [] artinya fetch hanya berjalan 1 kali saat awal render
 
   // 2. FILTER DATA API BERDASARKAN KETIKAN USER
+// 2. FILTER DATA API BERDASARKAN KETIKAN USER
   useEffect(() => {
     if (query.trim().length > 0) {
-      // Menggunakan allLocations yang didapat dari database
       const filtered = allLocations.filter(loc => {
-        // PERHATIAN: Sesuaikan .name dan .city dengan nama kolom di database kamu!
-        // Misalnya jika di databasemu namanya "nama_sungai", ubah loc.name menjadi loc.nama_sungai
-        const locationName = loc.name || loc.nama_sungai || ""; 
-        const locationCity = loc.city || loc.kota || "";
+        // Karena datamu pakai "name", kita panggil loc.name
+        const locationName = loc.name || ""; 
         
-        return locationName.toLowerCase().includes(query.toLowerCase()) ||
-               locationCity.toLowerCase().includes(query.toLowerCase());
+        // Kita hanya mencari berdasarkan nama lokasi saja
+        return locationName.toLowerCase().includes(query.toLowerCase());
       });
       setResults(filtered);
       setIsOpen(true);
@@ -62,19 +60,23 @@ export default function Topbar({ onSelectLocation }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (location) => {
-    // Sesuaikan dengan nama variabel di databasemu
-    const displayName = location.name || location.nama_sungai; 
+const handleSelect = (location) => {
+    const displayName = location.name; 
     
     setQuery(displayName); 
     setIsOpen(false);        
     
-    // Simpan lokasi yang dipilih ke dalam SensorContext
+    // Simpan lokasi ke dalam SensorContext
     setActiveLocation({
       id: location.id,
-      name: location.name || location.nama_sungai,
-      city: location.city || location.kota,
-      cameraUrl: location.camera_url || "http://192.168.137.18:8080/video" // Fallback IP Cam
+      name: location.name,
+      city: `Lat: ${location.latitude}, Lon: ${location.longitude}`, 
+      
+      // Ambil dari database (location.camera_url), JIKA kosong baru pakai fallback IP HP-mu
+      cameraUrl: location.camera_url || "http://192.168.137.18:8080/video",
+      
+      // Ambil gambar dari database juga
+      imageUrl: location.image_url 
     });
 
     if (onSelectLocation) {
@@ -119,12 +121,13 @@ export default function Topbar({ onSelectLocation }) {
                 onMouseEnter={(e) => e.currentTarget.style.background = darkMode ? "#333" : "#f1f1f1"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
               >
-                {/* Sesuaikan pemanggilan data dengan kolom database */}
+                {/* Nama Sungai */}
                 <strong style={{ color: darkMode ? "white" : "black", fontSize: "15px" }}>
-                  {loc.name || loc.nama_sungai}
+                  {loc.name}
                 </strong>
+                {/* Tampilkan Latitude dan Longitude */}
                 <span style={{ fontSize: "13px", color: darkMode ? "#aaa" : "#666", marginTop: "4px" }}>
-                  {loc.city || loc.kota}
+                  Titik Koordinat: {loc.latitude}, {loc.longitude}
                 </span>
               </div>
             ))}
