@@ -41,7 +41,7 @@ export default function RiverPanel(){
         setIsLive(true);
       } else {
         console.log(`Mematikan Worker untuk ${activeLocation.name}...`);
-        await fetch(`${API_URL}/camera/stop`, { 
+        await fetch(`${API_URL}/camera/stop?location_id=${activeLocation.id}`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
