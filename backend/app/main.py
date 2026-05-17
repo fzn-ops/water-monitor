@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import locations, readings, alerts, camera
+from app.routes import locations, readings, alerts, camera, auth
 from app.core.config import settings
 from app.core.database import engine, Base
 
@@ -45,6 +45,7 @@ app.include_router(locations.router, prefix="/api/v1/locations", tags=["Location
 app.include_router(readings.router, prefix="/api/v1/readings", tags=["Readings"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["Alerts"])
 app.include_router(camera.router, prefix="/api/v1/camera", tags=["Camera Worker"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
 
 @app.get("/", tags=["Health"])

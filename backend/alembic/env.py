@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Import settings & models agar Alembic mengenali tabel
-from backend.app.core.config import settings
-from backend.app.core.database import Base
-from backend.app.models import Location, Reading, Alert  # noqa: F401
+from app.core.config import settings
+from app.core.database import Base
+from app.models import Location, Reading, Alert  # noqa: F401
 
 config = context.config
 
