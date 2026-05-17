@@ -6,6 +6,7 @@ import logging
 import torch
 import time
 from app.services.telegram_bot import send_telegram_alert
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class WaterLevelDetector:
         self._load_model(model_path)
 
         self.last_alert_time = 0
-        self.batas_bahaya_cm = 100.0
+        self.batas_bahaya_cm = settings.THRESHOLD_BAHAYA
 
     def _load_model(self, model_path: str):
         """Load model YOLOv8 dari file .pt"""
@@ -110,7 +111,6 @@ class WaterLevelDetector:
 
         # Hitung jarak air pakai fungsi yang sudah kamu perbaiki sebelumnya
         pixel_distance, water_level_cm = self._calculate_water_level(meter_box, water_box)
-        
         if water_level_cm > self.batas_bahaya_cm:
             waktu_sekarang = time.time()    
             # Cek apakah sudah lewat 5 menit (300 detik) sejak alarm terakhir
@@ -121,8 +121,6 @@ class WaterLevelDetector:
                     f"⚠️ Status: Melewati batas aman ({self.batas_bahaya_cm} cm)\n\n"
                     f"Mohon segera lakukan pengecekan lokasi!"
                 )
-                
-                print(">>> [ALARM] Ketinggian air berbahaya! Mengirim ke Telegram...")
                 
                 # Kirim pesan + gambar hasil deteksi AI (annotated)
                 send_telegram_alert(pesan_bahaya, frame_gambar=annotated)
