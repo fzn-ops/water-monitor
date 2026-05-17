@@ -33,6 +33,7 @@ export default function RiverPanel(){
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 location_id: activeLocation.id, // Gunakan ID dinamis
+                location_name: activeLocation.name, // Gunakan nama lokasi dinamis
                 camera_source: activeLocation.cameraUrl, // Gunakan URL dinamis
             })
         });

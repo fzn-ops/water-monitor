@@ -12,6 +12,7 @@ _worker_task: asyncio.Task | None = None
 
 class WorkerConfig(BaseModel):
     location_id: int
+    location_name: str
     camera_source: int | str = 0       # 0 = webcam, atau URL IP cam
     interval_seconds: int = 5          # jeda antar pembacaan
     tinggi_fisik_meter_cm: float = 200.0           # faktor konversi pixel → cm
@@ -34,6 +35,7 @@ async def start_worker(config: WorkerConfig):
         run_camera_worker(
             location_id=config.location_id,
             camera_source=config.camera_source,
+            location_name=config.location_name,
             interval_seconds=config.interval_seconds,
             tinggi_fisik_meter_cm=config.tinggi_fisik_meter_cm,
         )

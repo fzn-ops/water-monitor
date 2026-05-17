@@ -57,7 +57,7 @@ class WaterLevelDetector:
         self.model.to(device)
         logger.info("Model berhasil dimuat.")
 
-    def detect_frame(self, frame: np.ndarray) -> dict:
+    def detect_frame(self, frame: np.ndarray, location_name: str = "Lokasi Simulasi") -> dict:
         # Inference YOLO, tidak perlu plot otomatis lagi
         results = self.model(frame, verbose=False)[0]
 
@@ -110,14 +110,16 @@ class WaterLevelDetector:
             cv2.putText(annotated, f"Water Level {best_water_conf:.2f}", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-        # Hitung jarak air pakai fungsi yang sudah kamu perbaiki sebelumnya
+        # Hitung jarak air pakai
         pixel_distance, water_level_cm = self._calculate_water_level(meter_box, water_box)
+
         if water_level_cm > self.batas_bahaya_cm:
             waktu_sekarang = time.time()    
             # Cek apakah sudah lewat 5 menit (300 detik) sejak alarm terakhir
             if waktu_sekarang - self.last_alert_time > 300:
                 pesan_bahaya = (
-                    f"🚨 *PERINGATAN BAHAYA BANJIR!* 🚨\n\n"
+                    f"🚨 PERINGATAN BAHAYA BANJIR! 🚨\n\n"
+                    f"📍 Lokasi: {location_name}\n"
                     f"🌊 Tinggi Air Terdeteksi: {water_level_cm:.2f} cm\n"
                     f"⚠️ Status: Melewati batas aman ({self.batas_bahaya_cm} cm)\n\n"
                     f"Mohon segera lakukan pengecekan lokasi!"

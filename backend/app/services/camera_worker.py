@@ -8,7 +8,7 @@ import ultralytics.nn.tasks
 # URL API Backend (Pastikan URL ini sesuai dengan port uvicorn kamu berjalan)
 API_BASE = "http://127.0.0.1:8000/api/v1"
 
-async def run_camera_worker(location_id: int, camera_source: int | str = 0,
+async def run_camera_worker(location_id: int, location_name: str, camera_source: int | str = 0,
                             interval_seconds: int = 5, tinggi_fisik_meter_cm: float = 200.0):
     """
     Background worker: baca frame kamera setiap `interval_seconds` detik,
@@ -16,6 +16,7 @@ async def run_camera_worker(location_id: int, camera_source: int | str = 0,
     """
     print("\n========== WORKER KAMERA DIMULAI ==========")
     print(f"-> Lokasi ID     : {location_id}")
+    print(f"-> Nama Lokasi   : {location_name}")
     print(f"-> Sumber Kamera : {camera_source}")
     print(f"-> Interval      : {interval_seconds} detik")
     
@@ -50,7 +51,7 @@ async def run_camera_worker(location_id: int, camera_source: int | str = 0,
                             continue
 
                         # Lakukan deteksi YOLO
-                        result = detector.detect_frame(frame)
+                        result = detector.detect_frame(frame, location_name=location_name)
 
                         # Jika tidak ada meteran/air terdeteksi (0.0 cm)
                         if result["water_level_cm"] == 0.0:
