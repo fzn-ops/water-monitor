@@ -107,7 +107,7 @@ async def generate_frames(camera_source: int | str = 0, tinggi_fisik_meter_cm: f
                 await asyncio.sleep(0.1)
                 continue
 
-            result = detector.detect_frame(frame)
+            result = detector.detect_frame(frame,trigger_alarm=False)
             annotated_frame = result["annotated_frame"]
 
             ret_encode, buffer = cv2.imencode('.jpg', annotated_frame)
