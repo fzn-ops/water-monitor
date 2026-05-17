@@ -18,7 +18,7 @@ def send_telegram_alert(pesan_teks: str, frame_gambar=None):
     print(f"-> Chat ID Terbaca: {TELEGRAM_CHAT_ID}")
     
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("❌ KESALAHAN: Token atau Chat ID kosong di .env! Gagal kirim.")
+        print("KESALAHAN: Token atau Chat ID kosong di .env! Gagal kirim.")
         print("=========================================\n")
         return
 
@@ -48,5 +48,5 @@ def send_telegram_alert(pesan_teks: str, frame_gambar=None):
         print("=========================================\n")
             
     except Exception as e:
-        print(f"💥 ERROR JARINGAN TELEGRAM: {e}")
+        print(f"ERROR JARINGAN TELEGRAM: {e}")
         print("=========================================\n")

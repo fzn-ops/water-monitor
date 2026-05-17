@@ -32,9 +32,11 @@ async def run_camera_worker(location_id: int, camera_source: int | str = 0,
         detector = WaterLevelDetector(tinggi_fisik_meter_cm=tinggi_fisik_meter_cm)
         print("-> [SUCCESS] Model YOLO berhasil dimuat!")
 
+
+        VIDEO_PATH = "simulasi_sungai1.mp4"
         # 4. Hubungkan ke Kamera (Webcam / IP Cam)
         print(f"-> Mencoba menyambungkan ke kamera...")
-        with CameraStream(source=camera_source) as cam:
+        with CameraStream(source=VIDEO_PATH) as cam:
             print("\n>>> [SUCCESS] KAMERA TERHUBUNG! Memulai pemantauan... <<<\n")
             
             async with httpx.AsyncClient() as client:

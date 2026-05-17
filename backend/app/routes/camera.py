@@ -75,7 +75,7 @@ async def generate_frames(camera_source: int | str = 0):
     """Generator untuk menghasilkan frame MJPEG secara terus-menerus"""
     from app.services.detection import WaterLevelDetector, CameraStream
     import asyncio
-    
+    camera_source = "simulasi_sungai1.mp4"
     # Load model tanpa kalkulasi konversi ke cm karena kita cuma butuh visual
     detector = WaterLevelDetector(tinggi_fisik_meter_cm=200.0)
     

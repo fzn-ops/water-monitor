@@ -154,7 +154,7 @@ class WaterLevelDetector:
         # =======================================================
         # GANTI ANGKA INI dengan ukuran lebar fisik papan penggarismu di dunia nyata
         # (Misalnya: papan meteran lebarnya 15 cm)
-        LEBAR_FISIK_METER_CM = 15.0 
+        LEBAR_FISIK_METER_CM = 30.0 
         
         # Lebar pixel = titik x kanan dikurangi titik x kiri (x2 - x1)
         lebar_pixel_meter = meter_box[2] - meter_box[0]
@@ -193,7 +193,7 @@ class WaterLevelDetector:
 
         # Pastikan tidak ada angka minus jika air surut jauh di luar kamera
         if water_level_cm < 0:
-            water_level_cm = 0.0
+            water_level_cm = 0.0 
 
         # --- LOG TERMINAL (Tersembunyi, hanya muncul kalau mode debug aktif) ---
         logger.debug(f">>> [DINAMIS] Lebar Pixel Meteran  : {lebar_pixel_meter:.1f} px")
@@ -230,15 +230,22 @@ class CameraStream:
 
     def read_frame(self) -> tuple[bool, np.ndarray | None]:
         """
-        Baca satu frame dari kamera.
-
-        Returns:
-            (True, frame)  — jika berhasil
-            (False, None)  — jika gagal
+        Baca satu frame dari kamera atau file video.
+        Jika input berupa file video dan sudah habis, otomatis rewind ke frame awal (loop).
         """
         if self.cap is None or not self.cap.isOpened():
             return False, None
+            
         ret, frame = self.cap.read()
+        
+        # === FITUR AUTO-LOOP UNTUK FILE VIDEO LOKAL ===
+        # Jika frame gagal dibaca (video habis) dan source-nya adalah teks (bukan angka webcam/IP cam)
+        if not ret and isinstance(self.source, str) and not self.source.startswith(("rtsp://", "http://", "https://")):
+            logger.info(">>> Video simulasi habis. Mengulang kembali dari awal...")
+            # Reset posisi frame ke indeks 0
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, frame = self.cap.read()
+            
         return ret, frame if ret else None
 
     def release(self):

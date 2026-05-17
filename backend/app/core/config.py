@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     TELEGRAM_CHAT_ID: str = ""
 
     # Threshold (cm)
-    THRESHOLD_WASPADA: int = 50
+    THRESHOLD_WASPADA: int = 100
     THRESHOLD_BAHAYA: int = 150
 
     class Config:

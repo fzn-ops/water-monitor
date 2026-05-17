@@ -151,7 +151,7 @@ export default function StatusCards() {
           }}
         >
           <span style={{ color: "#ff6b6b" }}>
-            ({Math.max(0, dangerThreshold - waterLevel)}cm)
+            ({Math.max(0, dangerThreshold - waterLevel).toFixed(2)}cm)
           </span>{" "}
           lagi dari ambang bahaya
         </p>
